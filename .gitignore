@@ -47,6 +47,7 @@ coverage/
 *.tsbuildinfo
 .claude
 .z-ai-config
-test
-prompt
+/test
+/prompt
+/tool-results/
 local-*
