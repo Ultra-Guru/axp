@@ -46,6 +46,10 @@
 # 需要 Bun（或改用 npm/pnpm 安装依赖均可）
 bun install
 bun run dev          # http://localhost:3000
+
+# 发布前：验证站点可构建、standalone 产物自带 axp/ 数据
+bun run build
+node scripts/site-check.mjs
 ```
 
 站点只有一个用户可见路由 `/`，包含：
@@ -86,9 +90,12 @@ python3 validator/test/schema-crosscheck.py
 
 # 30 条参考运行时端到端断言
 node runtime/test/smoke.mjs
+
+# 构建前数据完整性（零依赖，站点发布前必跑）
+node ../scripts/site-check.mjs --prebuild
 ```
 
-四套自检数字：**4/4 示例全绿 · 31/31 行为用例 · 43/43 交叉复核 · 30/30 端到端断言**。CI（`.github/workflows/ci.yml`）对每次 push / PR 执行同一组检查，外加站点 Lint 与全仓 Markdown 断链审计。
+四套自检数字：**4/4 示例全绿 · 31/31 行为用例 · 43/43 交叉复核 · 30/30 端到端断言**。CI（`.github/workflows/ci.yml`）对每次 push / PR 执行同一组检查，外加站点 Lint、**站点真实构建 + standalone 产物自检**与 `axp/` 内 Markdown 断链审计。构建门禁为 v1.0.4 新增，首次运行结果以 Actions 日志为准。
 
 ---
 
@@ -97,7 +104,12 @@ node runtime/test/smoke.mjs
 ```
 .
 ├── README.md                  ← 本文件
-├── .github/workflows/ci.yml   ← CI：规范自检 + 站点 Lint + 链接审计
+├── .github/workflows/ci.yml   ← CI：规范自检 + 站点 Lint + 站点构建 + 链接审计
+├── LICENSE                    ← MIT（顶层，供 GitHub 识别）
+├── AUDIT.md                   ← 仓库完成度审计报告（证据 / 评分 / P0–P2 问题）
+├── ROADMAP-ALL-TASKS.md       ← 一次性全部任务总账（A–G 七组，含验收标准）
+├── PATCHES.md                 ← 本轮改动清单与回滚方法
+├── scripts/site-check.mjs     ← 零依赖产物自检（--prebuild / standalone）
 ├── package.json               ← Next.js 站点（Bun / TypeScript）
 ├── next.config.ts / tsconfig.json / eslint.config.mjs / tailwind.config.ts
 ├── src/
@@ -202,8 +214,11 @@ AXP-0（装载 + tools）→ AXP-1（+ surfaces / knowledge）→ AXP-2（+ agen
 
 路线图：M1 ✅ → M2 ✅（Node）/ ⚠️（Android 骨架）→ M2.5 热加载 ✅ → M3 🟡 → M4 🟡（`gradient` 已实现，Shizuku 待接）→ M5 ✅ → M6 ⬜ → M7 ⬜。详见 [`axp/spec/01-format.md`](axp/spec/01-format.md) §12。
 
+完成度逐项评估、问题分级与剩余任务，见 [`AUDIT.md`](AUDIT.md) 与 [`ROADMAP-ALL-TASKS.md`](ROADMAP-ALL-TASKS.md)。
+
 ## 变更记录（摘要）
 
+- **v1.0.4**（本轮）：完成度审计；修复 standalone 产物不含 `axp/` 数据的部署缺陷（`outputFileTracingIncludes` + `build` 脚本复制）；CI 新增 `web-build` job；新增顶层 `LICENSE`、产物自检脚本、审计报告与任务总账。**规范语义不变**。详见 [`PATCHES.md`](PATCHES.md) 与 [`AUDIT.md`](AUDIT.md)。
 - **v1.0.3**（本仓库基线）：修复参考运行时 Surface 背压时序缺陷——`prime()` 的初始 `full` 快照不再占用推送窗口，装载后首个真实 `delta` 不再被误吞；`smoke.mjs` 30/30 稳定全绿。**规范语义不变**。
 - **v1.0.2**：M3 感知域示例与教程（`examples/04-domains` + `docs/domains-tutorial.md`）；回归加固；自检数字 31/43/30。
 - **v1.0.1**：参考运行时 `runtime/`、双引擎交叉复核、Android 骨架、CI 三 job、文档增强。
@@ -230,6 +245,8 @@ AXP-0（装载 + tools）→ AXP-1（+ surfaces / knowledge）→ AXP-2（+ agen
 | `node axp/cli/bin/axp.mjs new <id> [-o dir]` | 生成最小插件骨架 |
 | `node axp/cli/bin/axp.mjs pack <dir> -o x.axp` | 打包（发布前 `apksigner sign --v3`） |
 | `node axp/runtime/test/smoke.mjs` | 参考运行时 30 条端到端断言 |
+| `node scripts/site-check.mjs --prebuild` | 构建前 `axp/` 数据完整性（零依赖） |
+| `node scripts/site-check.mjs` | 构建后 standalone 产物自包含性 |
 
 ## 贡献与许可
 

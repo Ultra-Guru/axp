@@ -2,6 +2,27 @@
 
 本文件记录规范与工具链的变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.0.4] - 2026-11-15
+
+> 仓库级工程化修复与完成度审计；**规范语义不变**，`axp` 格式版本仍为 `1.0.0`。
+> 本条记录的是外层 Next.js 文档站点与 CI 的变化，`axp/` 内规范 / schema / 校验器 / CLI / 运行时 / 示例均未改动。
+
+### Fixed
+- standalone 自包含部署缺陷：站点运行时以 `path.join(process.cwd(), "axp")` 读取规范项目，Next.js output file tracing 无法追踪该拼接路径；现通过 `next.config.ts` 的 `outputFileTracingIncludes` 与 `build` 脚本 `cp -r axp .next/standalone/` 双保险解决，避免容器化部署后文档库与校验器演练场失效
+- `readDocContent` 路径前缀校验改用 `path.sep` 判断，避免同前缀目录绕过（纵深防御）
+
+### Added
+- CI `web-build` job：`bun run build` + `node scripts/site-check.mjs`，首次把站点可构建性纳入质量门禁
+- `scripts/site-check.mjs`：零依赖产物自检（`--prebuild` 数据完整性 / 默认 standalone 自包含性）
+- 顶层 `LICENSE`（MIT）、`AUDIT.md`（完成度审计）、`ROADMAP-ALL-TASKS.md`（一次性全部任务）、`PATCHES.md`（改动与回滚）
+
+### 未验证
+- 本环境不具备 Bun 与完整前端依赖安装条件，**未执行一次真实 `next build`**；`web-build` job 的首次运行结果需在有 Bun 的环境观测。
+
+### Verified
+- 4 个示例 `axp validate` 全绿；`run-tests.mjs` 31/31；`schema-crosscheck.py` 43/43；`smoke.mjs` 30/30
+- 全仓 Markdown 本地链接零断链；`axp/` 与 v1.0.2 基准逐文件比对，仅 CHANGELOG 与 `runtime/src/surfaces.mjs`（v1.0.3 修复）两处差异
+
 ## [1.0.3] - 2026-11-14
 
 > 参考运行时时序修复；**规范语义不变**，`axp` 格式版本仍为 `1.0.0`。

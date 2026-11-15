@@ -224,7 +224,7 @@ export function readDocContent(relPath: string): string | null {
   const meta = DOC_META.find((d) => d.path === relPath);
   if (!meta) return null;
   const abs = path.join(AXP_ROOT, relPath);
-  if (!abs.startsWith(AXP_ROOT)) return null;
+  if (abs !== AXP_ROOT && !abs.startsWith(AXP_ROOT + path.sep)) return null;
   try {
     return fs.readFileSync(abs, "utf8");
   } catch {

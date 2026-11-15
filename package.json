@@ -1,11 +1,11 @@
 {
   "name": "axp",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "description": "AXP — Agent eXtension Package：Android 专属独立插件描述格式（规范 + 校验器 + CLI + 参考运行时）与 Next.js 交互式文档站点",
   "scripts": {
     "dev": "next dev -p 3000 2>&1 | tee dev.log",
-    "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
+    "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/ && cp -r axp .next/standalone/",
     "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
     "db:push": "prisma db push --accept-data-loss",

@@ -46,6 +46,24 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run lint
 
+  web-build:
+    name: 文档站点构建 + 产物自检
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: 构建前 axp/ 数据完整性（零依赖）
+        run: node scripts/site-check.mjs --prebuild
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - name: standalone 产物自包含性
+        run: node scripts/site-check.mjs
+
   docs-links:
     name: 全仓 Markdown 链接检查
     runs-on: ubuntu-latest
