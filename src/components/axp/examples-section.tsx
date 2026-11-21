@@ -4,7 +4,6 @@ import { useState } from "react";
 import { CheckCircle2, ChevronDown, FolderTree, Loader2, Package, PlayCircle, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import type { ExampleData } from "@/lib/axp-server";

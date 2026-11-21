@@ -1,8 +1,8 @@
 # AXP · 一次性全部任务总账
 
 > 状态：Stable
-> 适用：`Ultra-Guru/axp` @ `main` · v1.0.4
-> 说明：**这一份列全整个项目的所有任务**，包含已完成的、进行中的、还没开始的；不再分批补。状态以 2026-11-15 审计结果为准。
+> 适用：`Ultra-Guru/axp` @ `main` · v1.0.5
+> 说明：**这一份列全整个项目的所有任务**，包含已完成的、进行中的、还没开始的；不再分批补。状态以 2026-11-15 质量门禁批次（v1.0.5）结束后的实测结果为准。
 > 图例：✅ 已完成并验证　🟡 部分完成　⬜ 未开始　⚠️ 有风险 / 待实测　🔒 本轮刻意未动
 
 ## 状态速查
@@ -13,11 +13,11 @@
 | B 工具链与验证 | 11 | 0 | 0 | 0 | 0 |
 | C 文档与教程 | 9 | 0 | 0 | 0 | 0 |
 | D 交互式文档站点 | 11 | 3 | 2 | 1 | 0 |
-| E CI / 构建 / 部署 | 4 | 1 | 2 | 2 | 0 |
+| E CI / 构建 / 部署 | 9 | 0 | 1 | 0 | 0 |
 | F 真机与生态 | 2 | 3 | 4 | 1 | 0 |
-| G 治理与清理 | 3 | 1 | 3 | 0 | 3 |
+| G 治理与清理 | 3 | 1 | 6 | 0 | 0 |
 
-**当前唯一 P0 未知数：E03（一次真实 `next build`）尚未实测。**
+**P0 已全部清零（E03 本地 + CI 双实测；E04 首次运行即绿；v1.0.5 补齐 E06–E09 质量门禁）。当前最高优先级批次：G05–G08 依赖与模板清理。**
 
 ---
 
@@ -98,13 +98,13 @@
 |---|---|---|---|---|---|
 | E01 | `axp-selfcheck` job（schema / 4 示例 / 31 / 43 / 30 / pack） | ✅ | — | 当前 CI 已通过 | `.github/workflows/ci.yml` |
 | E02 | `docs-links` job（`axp/` 内部断链检查） | ✅ | — | 39 文件 0 断链 | 同上 |
-| E03 | **一次真实 `bun run build` 实测** | ⚠️ | **P0** | 在有 Bun/联网环境跑通并留日志 | 本地 / CI |
-| E04 | `web-build` job（build + 产物自检） | ✅ | P0 | 本轮新增，随 E03 一起验证 | `.github/workflows/ci.yml` |
+| E03 | **一次真实 `bun run build` 实测** | ✅ | **P0** | v1.0.4 本地实测成功；CI `web-build` 首次运行即绿（run #3） | 本地 / CI |
+| E04 | `web-build` job（build + 产物自检） | ✅ | P0 | v1.0.4 新增，随 E03 一起验证 | `.github/workflows/ci.yml` |
 | E05 | `web-lint` job | ✅ | — | `bun install --frozen-lockfile` + lint 通过 | 同上 |
-| E06 | `docs-links` 扩展到全仓（含顶层 README / AUDIT / 任务总账） | ⬜ | P1 | 扫描根目录 `.md`，不进 `node_modules` | 同上 |
-| E07 | `typescript.ignoreBuildErrors` 置 `false` | ⬜ | P1 | 先跑 `tsc --noEmit` 修完类型错误再改 | `next.config.ts` |
-| E08 | ESLint 至少恢复 `no-undef` / `no-unused-vars` / `react-hooks/exhaustive-deps` | ⬜ | P2 | lint 仍绿且能挡真实问题 | `eslint.config.mjs` |
-| E09 | `reactStrictMode` 置 `true` | ⬜ | P2 | dev 下无 hydration 报错 | `next.config.ts` |
+| E06 | `docs-links` 扩展到全仓（含顶层 README / AUDIT / 任务总账） | ✅ | P1 | 42 个 md / 203 本地链接 / 0 断链（含根目录 4 份） | 同上 |
+| E07 | `typescript.ignoreBuildErrors` 置 `false` | ✅ | P1 | v1.0.5：tsc 零错误后开启，`bun run build` 含类型检查通过 | `next.config.ts` |
+| E08 | ESLint 至少恢复 `no-undef` / `no-unused-vars` / `react-hooks/exhaustive-deps` | ✅ | P2 | v1.0.5：三类规则 error 级生效，lint 零违规；`axp/` 移出站点 lint 范围 | `eslint.config.mjs` |
+| E09 | `reactStrictMode` 置 `true` | ✅ | P2 | v1.0.5：StrictMode 双调用实测无 hydration 报错 | `next.config.ts` |
 | E10 | 部署文档（Vercel / standalone 容器 / 环境变量 / 缓存） | ⬜ | P1 | 按文档可复现一次部署 | 新增 `docs/deployment.md` |
 
 ## F · 真机与生态（路线图 M3 / M4 / M6 / M7）
@@ -130,22 +130,22 @@
 | G02 | 移除 `allowedDevOrigins` 生成环境残留 | ✅ | P2 | 配置中无第三方域名 | `next.config.ts` |
 | G03 | 完整审计报告 + 任务总账 + 改动清单 | ✅ | — | 三份文档互相链接可达 | `AUDIT.md` / 本文件 / `PATCHES.md` |
 | G04 | `bun.lock` workspace name 改为 `axp` | 🟡 | P2 | 与 `package.json` 一致（当前 CI 已通过，仅观感） | `bun.lock` |
-| G05 | **清理 21 个未使用依赖并重生成 `bun.lock`** | 🔒 | P1 | 删除后 `bun install --frozen-lockfile` 仍通过 | `package.json` + `bun.lock` |
-| G06 | 删除 32 个未使用 shadcn 组件 | 🔒 | P2 | 站点渲染不变、lint 通过 | `src/components/ui/` |
-| G07 | 删除 Prisma 模板（`schema.prisma` + `src/lib/db.ts` + db 脚本） | 🔒 | P1 | 无 `DATABASE_URL` 依赖 | `prisma/` / `src/lib/db.ts` / `package.json` |
+| G05 | **清理 21 个未使用依赖并重生成 `bun.lock`** | ⬜ | P1 | 删除后 `bun install --frozen-lockfile` 仍通过 | `package.json` + `bun.lock` |
+| G06 | 删除 32 个未使用 shadcn 组件 | ⬜ | P2 | 站点渲染不变、lint 通过 | `src/components/ui/` |
+| G07 | 删除 Prisma 模板（`schema.prisma` + `src/lib/db.ts` + db 脚本） | ⬜ | P1 | 无 `DATABASE_URL` 依赖 | `prisma/` / `src/lib/db.ts` / `package.json` |
 | G08 | 依赖清理后重新生成并复核 lockfile | ⬜ | P1 | 与 G05–G07 同批完成 | `bun.lock` |
 | G09 | `axp/` 作为独立仓库拆出的可复现流程 | ⬜ | P3 | 按 `github-setup.md` 拆出后自检全绿 | `axp/docs/github-setup.md` |
 | G10 | 发 `spec-v1.0.0` tag 与 Release 产物 | ⬜ | P2 | `axp-spec-<version>.zip` 可下载 | GitHub Releases |
 
-> 🔒 = 本轮**刻意未动**：改 `package.json` 依赖必须同步重生成 `bun.lock`，否则 CI 的 `--frozen-lockfile` 会失败；本环境无 Bun，贸然修改等于把仓库弄红。G05–G08 必须在有 Bun 的机器上作为**一批**完成。
+> 🔒 图例的历史备注（v1.0.4 审计时成立）：当时构建机无 Bun，改 `package.json` 依赖无法同步重生成 `bun.lock`，贸然修改会让 CI 的 `--frozen-lockfile` 变红。**v1.0.5 起该约束解除（Bun 可用），G05–G08 已解锁，仍须作为一批完成：删依赖 → 重生成 lock → 本地全套自检 → CI 绿。**
 
 ---
 
 ## 建议执行顺序（一次排完，不用再问）
 
-1. **E03 / E04**：在有 Bun 的机器跑 `bun install --frozen-lockfile && bun run build && node scripts/site-check.mjs`，把构建日志贴回来；若首次失败，按日志修类型/字体，再动 `ignoreBuildErrors`
-2. **E06 / E07 / E08 / E09**：把质量门禁补齐，让 lint 与 build 真正能挡问题
-3. **G05 → G07 → G08**：一批清理模板残留，`bun install` 重生成 lock，确认 CI 仍绿
+1. ~~**E03 / E04**：在有 Bun 的机器跑 `bun install --frozen-lockfile && bun run build && node scripts/site-check.mjs`，把构建日志贴回来；若首次失败，按日志修类型/字体，再动 `ignoreBuildErrors`~~ ✅ v1.0.4 完成
+2. ~~**E06 / E07 / E08 / E09**：把质量门禁补齐，让 lint 与 build 真正能挡问题~~ ✅ v1.0.5 完成
+3. **G05 → G07 → G08**：一批清理模板残留（21 个未用依赖 + Prisma 模板 + 32 个未用组件），`bun install` 重生成 lock，确认 CI 仍绿
 4. **D14 / D15 / D16**：消除站点硬编码与无效渲染，让数据从 `axp/` 自动推导
 5. **F04 / F05 / F06**：真机适配器与 Android 骨架编译，这是从「格式规范」走向「能用的 Android 生态」的关键一跳
 6. **F07 / F08 / E10 / G10**：签名信任链、部署文档、Release 产物，然后对外发布

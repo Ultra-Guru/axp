@@ -69,27 +69,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: axp/ 内部链接无断链
+      - name: 全仓 Markdown 链接无断链（根目录 + axp/）
         run: |
           node - <<'NODE'
           const fs = require('fs'), path = require('path');
-          const root = 'axp';
+          const SKIP = new Set(['node_modules', '.git', '.next', 'out', 'build']);
           const files = [];
           (function walk(d){ for (const e of fs.readdirSync(d,{withFileTypes:true})) {
-            const p = path.join(d,e.name);
-            if (e.isDirectory()) walk(p); else if (p.endsWith('.md')) files.push(p);
-          }})(root);
+            if (e.isDirectory()) { if (!SKIP.has(e.name)) walk(path.join(d,e.name)); }
+            else if (e.name.endsWith('.md')) files.push(path.join(d,e.name));
+          }})('.');
           let bad = [];
           for (const f of files) {
             const md = fs.readFileSync(f,'utf8');
             for (const m of md.matchAll(/\]\(([^)#\s]+)\)/g)) {
               let href = m[1];
               if (/^https?:|^mailto:/.test(href)) continue;
-              const baseDir = path.dirname(f);
-              const resolved = path.resolve(baseDir, href);
+              const resolved = path.resolve(path.dirname(f), href);
               if (!fs.existsSync(resolved)) bad.push(`${f}: ${href}`);
             }
           }
           if (bad.length) { console.error('broken links:\n' + bad.join('\n')); process.exit(1); }
-          console.log(`all ${files.length} markdown files, local links OK`);
+          console.log(`all ${files.length} markdown files (repo-wide), local links OK`);
           NODE

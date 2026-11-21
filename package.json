@@ -1,6 +1,6 @@
 {
   "name": "axp",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "description": "AXP — Agent eXtension Package：Android 专属独立插件描述格式（规范 + 校验器 + CLI + 参考运行时）与 Next.js 交互式文档站点",
   "scripts": {

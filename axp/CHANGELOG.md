@@ -2,6 +2,28 @@
 
 本文件记录规范与工具链的变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.0.5] - 2026-11-15
+
+> 质量门禁批次（ROADMAP E06–E09）；**规范语义不变**，`axp` 格式版本仍为 `1.0.0`。
+> 本条记录的仍是外层 Next.js 文档站点与 CI 的变化，`axp/` 内规范 / schema / 校验器 / CLI / 运行时 / 示例均未改动。
+
+### Changed
+- `next.config.ts`：`typescript.ignoreBuildErrors` 置 `false`（E07）——构建期真实执行类型检查；`reactStrictMode` 置 `true`（E09）——开发期双调用渲染暴露不纯组件，实测无 hydration 报错
+- `eslint.config.mjs`：恢复质量门禁规则（E08）——`@typescript-eslint/no-unused-vars`（error）、`react-hooks/exhaustive-deps`（error）、JS/MJS 作用域的 `no-undef` 与基础 `no-unused-vars`（error）；`axp/`（自带 31/43/30 门禁的独立规范项目）移出站点 lint 范围
+
+### Fixed
+- `playground-section.tsx` 破坏性预设 `TOOL_CONFIRM_REQUIRED` 的 `ocr` 缺空值守卫（tsc TS18048）
+- `use-toast.ts` 的 `actionTypes` 改为纯类型声明（消除「仅作类型使用」的 unused 告警与运行时对象）
+- 清理 4 处未使用导入（`SheetTrigger` / `Card` / `CardContent` / `ReactNode` / `Tooltip` 三件套）
+
+### Added
+- CI `docs-links` job 从仅扫 `axp/` 扩展到全仓（根目录 README / AUDIT / PATCHES / ROADMAP 一并检查，E06）——42 个 md / 203 本地链接 / 0 断链
+- `tsconfig.json` 排除沙盒目录（`skills` / `upload` / `mini-services` / `db`），保证本地与 CI 类型检查口径一致
+
+### Verified
+- `tsc --noEmit` 零错误；`bun run lint` 零违规；`bun run build`（含类型检查）成功；`site-check.mjs` standalone 45 项通过
+- StrictMode 下页面无 hydration 报错；移动端目录 Sheet、演练场校验、文档库渲染实测正常
+
 ## [1.0.4] - 2026-11-15
 
 > 仓库级工程化修复与完成度审计；**规范语义不变**，`axp` 格式版本仍为 `1.0.0`。

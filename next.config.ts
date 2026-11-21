@@ -15,10 +15,11 @@ const nextConfig: NextConfig = {
   },
 
   typescript: {
-    // TODO(E07): 先跑通 tsc --noEmit / bun run build 并修完类型错误，再改为 false
-    ignoreBuildErrors: true,
+    // E07 已完成：tsc --noEmit 零错误后开启构建期类型检查
+    ignoreBuildErrors: false,
   },
-  reactStrictMode: false,
+  // E09：严格模式双调用渲染，暴露不纯组件；当前代码库无 hydration 报错
+  reactStrictMode: true,
 };
 
 export default nextConfig;

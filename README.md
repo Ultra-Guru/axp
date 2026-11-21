@@ -95,7 +95,7 @@ node runtime/test/smoke.mjs
 node ../scripts/site-check.mjs --prebuild
 ```
 
-四套自检数字：**4/4 示例全绿 · 31/31 行为用例 · 43/43 交叉复核 · 30/30 端到端断言**。CI（`.github/workflows/ci.yml`）对每次 push / PR 执行同一组检查，外加站点 Lint、**站点真实构建 + standalone 产物自检**与 `axp/` 内 Markdown 断链审计。构建门禁为 v1.0.4 新增，首次运行结果以 Actions 日志为准。
+四套自检数字：**4/4 示例全绿 · 31/31 行为用例 · 43/43 交叉复核 · 30/30 端到端断言**。CI（`.github/workflows/ci.yml`）对每次 push / PR 执行同一组检查，外加站点 Lint、**站点真实构建 + standalone 产物自检**与**全仓 Markdown 断链审计**（根目录 + `axp/`，v1.0.5 起纳入根目录四份文档）。构建期类型检查与 ESLint 关键规则（unused-vars / no-undef / exhaustive-deps）自 v1.0.5 起真实生效。
 
 ---
 
@@ -218,7 +218,8 @@ AXP-0（装载 + tools）→ AXP-1（+ surfaces / knowledge）→ AXP-2（+ agen
 
 ## 变更记录（摘要）
 
-- **v1.0.4**（本轮）：完成度审计；修复 standalone 产物不含 `axp/` 数据的部署缺陷（`outputFileTracingIncludes` + `build` 脚本复制）；CI 新增 `web-build` job；新增顶层 `LICENSE`、产物自检脚本、审计报告与任务总账。**规范语义不变**。详见 [`PATCHES.md`](PATCHES.md) 与 [`AUDIT.md`](AUDIT.md)。
+- **v1.0.5**（本轮）：质量门禁批次——`ignoreBuildErrors` 置 `false`（构建期真实类型检查）、`reactStrictMode` 开启、ESLint 恢复 unused-vars / no-undef / exhaustive-deps 三类规则、CI 链接检查扩展到全仓；修复演练场预设的 `ocr` 空值缺陷与若干未使用导入。**规范语义不变**。
+- **v1.0.4**：完成度审计；修复 standalone 产物不含 `axp/` 数据的部署缺陷（`outputFileTracingIncludes` + `build` 脚本复制）；CI 新增 `web-build` job；新增顶层 `LICENSE`、产物自检脚本、审计报告与任务总账。**规范语义不变**。详见 [`PATCHES.md`](PATCHES.md) 与 [`AUDIT.md`](AUDIT.md)。
 - **v1.0.3**（本仓库基线）：修复参考运行时 Surface 背压时序缺陷——`prime()` 的初始 `full` 快照不再占用推送窗口，装载后首个真实 `delta` 不再被误吞；`smoke.mjs` 30/30 稳定全绿。**规范语义不变**。
 - **v1.0.2**：M3 感知域示例与教程（`examples/04-domains` + `docs/domains-tutorial.md`）；回归加固；自检数字 31/43/30。
 - **v1.0.1**：参考运行时 `runtime/`、双引擎交叉复核、Android 骨架、CI 三 job、文档增强。

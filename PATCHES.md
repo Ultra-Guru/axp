@@ -1,4 +1,52 @@
-# v1.0.4 · 本轮改动清单与回滚方法
+# AXP · 分轮改动清单与回滚方法
+
+> 每轮一批，改动可追溯、可回滚。最新轮次在前。
+
+---
+
+# v1.0.5 · 质量门禁批次（ROADMAP E06–E09）
+
+> 基线：`Ultra-Guru/axp` @ `e4e7de0`（v1.0.4）
+> 性质：把 lint 与 build 从「能过」变成「能挡问题」。`axp/` 内规范 / schema / 校验器 / CLI / 运行时 / 示例**逐字节未改动**（仅 CHANGELOG 追加 1.0.5 段）。
+
+## 1. 改了什么
+
+| # | 文件 | 改动 | 为什么 |
+|---|---|---|---|
+| 1 | `next.config.ts` | `ignoreBuildErrors: false`；`reactStrictMode: true` | E07/E09：构建期真实类型检查 + 开发期双调用渲染 |
+| 2 | `eslint.config.mjs` | 恢复 `@typescript-eslint/no-unused-vars`、`react-hooks/exhaustive-deps`（均 error）；JS/MJS 作用域 `no-undef` + 基础 `no-unused-vars`（error，手工 Node globals）；`axp/` 与沙盒目录移出 lint 范围 | E08：三类规则真实生效；不新增依赖避免 bun.lock 重生成（G05–G08 批次统一处理） |
+| 3 | `src/components/axp/playground-section.tsx` | `ocr` 加空值守卫 | tsc TS18048，破坏性预设的真实类型缺陷 |
+| 4 | `src/hooks/use-toast.ts` | `actionTypes` const 改纯 type 声明，删除重复的 `typeof` 别名 | 消除「仅作类型使用」告警与运行时对象 |
+| 5 | 4 个组件文件 | 删除未使用导入（`SheetTrigger` / `Card` / `CardContent` / `ReactNode` / `Tooltip` 三件套） | lint 新规则捕获 |
+| 6 | `.github/workflows/ci.yml` | `docs-links` 从仅扫 `axp/` 扩展到全仓（跳过 `node_modules` / `.git` 等） | E06：根目录 README / AUDIT / PATCHES / ROADMAP 入检 |
+| 7 | `tsconfig.json` | exclude 追加 `skills` / `upload` / `mini-services` / `db` | 沙盒目录不入类型检查口径，本地与 CI 一致 |
+| 8 | `package.json` / `axp/CHANGELOG.md` / `README.md` / `ROADMAP-ALL-TASKS.md` / `PATCHES.md` | 版本 1.0.5、变更记录、任务状态同步 | 文档与仓库实际一致 |
+
+## 2. 验证
+
+| 检查 | 结果 |
+|---|---|
+| `bunx tsc --noEmit` | 零错误 |
+| `bun run lint` | 零违规（含 exhaustive-deps error 级） |
+| `bun run build`（含类型检查） | 成功，13.4s |
+| `node scripts/site-check.mjs` | standalone 45 项通过 |
+| 全仓链接检查（CI 同款脚本） | 42 md / 203 链接 / 0 断链 |
+| StrictMode 浏览器实测 | 无 hydration 报错；移动端 Sheet / 演练场 / 文档库正常 |
+
+## 3. 怎么回滚
+
+| 想撤掉 | 做法 |
+|---|---|
+| 1 | `ignoreBuildErrors` 改回 `true`、`reactStrictMode` 改回 `false` |
+| 2 | 把 `eslint.config.mjs` 恢复为 v1.0.4 版本（`git checkout e4e7de0 -- eslint.config.mjs`） |
+| 3–5 | `git checkout e4e7de0 -- src/` |
+| 6 | `git checkout e4e7de0 -- .github/workflows/ci.yml` |
+| 7 | `git checkout e4e7de0 -- tsconfig.json` |
+| 8 | 文档按 diff 回退对应段落 |
+
+---
+
+# v1.0.4 · 审计与 standalone 修复批次
 
 > 状态：Stable
 > 基线：`Ultra-Guru/axp` @ `2baeba7`（v1.0.3）

@@ -57,6 +57,7 @@ const BREAK_PRESETS: { label: string; code: string; desc: string; mutate: Mutato
     desc: "ledger.ocr 改成 destructive 但不开 confirm",
     mutate: (m) => {
       const ocr = (m.tools as Record<string, unknown>[]).find((t) => t.id === "ledger.ocr");
+      if (!ocr) return;
       ocr.sideEffects = "destructive";
       ocr.confirm = false;
     },
