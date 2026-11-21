@@ -17,6 +17,7 @@
 | 2 | `package.json` | 移除 47 个未用依赖（`dependencies` 66 → 19）；`version` → 1.0.6 | G05/G08：先删组件再做第二轮依赖推导——19 个审计余量（`@dnd-kit/*`、`@mdxeditor/editor`、`framer-motion`、`next-auth`、`next-intl`、`sharp`、`zod`、`zustand` 等）+ 28 个级联孤儿（`recharts`、`embla-carousel-react`、`cmdk`、`vaul`、`sonner`、`react-hook-form`、19 个 `@radix-ui/react-*` 等）。只删组件不清孤儿依赖会让 lockfile 继续携带死重量 |
 | 3 | `bun.lock` | 重生成（Removed: 47） | 依赖变更必须同步 lock；`--frozen-lockfile` 复核通过 |
 | 4 | `axp/CHANGELOG.md` / `README.md` / `ROADMAP-ALL-TASKS.md` / `PATCHES.md` | 版本 1.0.6、变更记录、任务状态同步 | 文档与仓库实际一致 |
+| 5 | `tailwind.config.ts` | 整删（Tailwind v3 模板残留） | v1.0.6 首推（2400a46）后 **CI run #6 `web-build` 即败**：`tsc` 报 `Cannot find module 'tailwindcss-animate'`——该文件 import 已删依赖，但本地 node_modules 有残留掩蔽了错误（`bun install` 的 Removed 未清干净）。深挖后确认为死配置：站点用 Tailwind 4（globals.css 的 `@import "tailwindcss"` / `@plugin`），v4 不自动加载 JS 配置且 globals.css 无 `@config` 指令，`components.json` 的 tailwind.config 字段为空。修复随批附干净重装流程：`rm -rf node_modules && bun install --frozen-lockfile`，本地从此与 CI 同口径。**门禁有效性第二次实证**（第一次是 v1.0.5 的 Prisma） |
 
 > 特殊说明：`react-dom` 移出直接依赖后，经 `next` 的 `peerDependencies`（`^18.2.0 || ^19`）自动安装，node_modules 实测 19.2.3 在位，构建与 dev 均正常。`@radix-ui/react-dialog` 因被保留的 `sheet.tsx` 引用而保留。
 
@@ -24,11 +25,11 @@
 
 | 检查 | 结果 |
 |---|---|
-| `bunx tsc --noEmit` | 零错误 |
+| `bunx tsc --noEmit` | 零错误（tailwind.config.ts 删除后，在 `rm -rf node_modules` 干净重装的对齐环境下复验） |
 | `bun run lint` | 零违规（含 exhaustive-deps error 级） |
-| `bun run build`（含类型检查） | 成功，12.4s |
+| `bun run build`（含类型检查） | 成功，12.4s（首验）；tailwind.config.ts 修复后干净环境复验通过 |
 | `node scripts/site-check.mjs` | standalone 45 项通过 |
-| `bun install --frozen-lockfile` | 通过（543 installs / 603 packages，清理后） |
+| `bun install --frozen-lockfile` | 通过（543 installs / 603 packages → 删 tailwind.config 后 534 packages 干净重装） |
 | dev server + `/api/validate` 端到端 | 200；结构化校验结果正常（API → 临时目录 → 子进程 → axp 校验器全链路） |
 
 ## 3. 怎么回滚
@@ -38,6 +39,7 @@
 | 1（组件） | `git checkout 1676785 -- src/components/ui/` |
 | 2–3（依赖与 lock） | `git checkout 1676785 -- package.json bun.lock && bun install` |
 | 4（文档） | 按 diff 回退对应段落 |
+| 5（tailwind 配置） | `git checkout 2400a46^ -- tailwind.config.ts && bun add tailwindcss-animate`（注意：恢复后需接受 Tailwind v3 死配置回归） |
 
 ---
 

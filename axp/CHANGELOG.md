@@ -10,6 +10,7 @@
 ### Removed
 - 36 个不可达 shadcn/ui 组件（G06）：以「`ui/` 目录外被引用」为根做传递闭包，36 个组件无任何存活消费者；保留 12 个（accordion / badge / button / card / collapsible / input / label / sheet / switch / toast / toaster / tooltip）。比审计清点的 32 个多 4 个——v1.0.4 / v1.0.5 的死导入清理使更多组件失去引用者
 - 47 个未使用依赖（G05/G08）：审计清单余量 19 个（`@dnd-kit/*`、`@mdxeditor/editor`、`framer-motion`、`next-auth`、`next-intl`、`sharp`、`zod`、`zustand` 等）+ 组件删除后的级联孤儿 28 个（`recharts`、`embla-carousel-react`、`cmdk`、`vaul`、`sonner`、`react-hook-form`、19 个 `@radix-ui/react-*` 等）。`dependencies` 从 66 收敛到 19，保留项全部有实证引用
+- `tailwind.config.ts` 整删（Tailwind v3 模板残留，唯一引用已删依赖 `tailwindcss-animate`）：站点实际使用 Tailwind 4 的 CSS 化配置（`@import` / `@plugin`），v4 不自动加载 JS 配置且无 `@config` 指令。首推后 CI `web-build` 即捕获该文件的死导入（本地 node_modules 残留曾掩蔽此错误），随批修复并以 `rm -rf node_modules && bun install --frozen-lockfile` 干净重装对齐本地与 CI 口径
 - `react-dom` 移出直接依赖后由 `next` 的 peerDependencies 自动安装（实测 19.2.3 在位）
 
 ### Verified
