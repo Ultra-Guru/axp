@@ -2,6 +2,20 @@
 
 本文件记录规范与工具链的变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.0.6] - 2026-11-21
+
+> 依赖与模板清理批次（ROADMAP G05/G06/G08）；**规范语义不变**，`axp` 格式版本仍为 `1.0.0`。
+> 本条记录的仍是外层 Next.js 文档站点与 CI 的变化，`axp/` 内规范 / schema / 校验器 / CLI / 运行时 / 示例均未改动。
+
+### Removed
+- 36 个不可达 shadcn/ui 组件（G06）：以「`ui/` 目录外被引用」为根做传递闭包，36 个组件无任何存活消费者；保留 12 个（accordion / badge / button / card / collapsible / input / label / sheet / switch / toast / toaster / tooltip）。比审计清点的 32 个多 4 个——v1.0.4 / v1.0.5 的死导入清理使更多组件失去引用者
+- 47 个未使用依赖（G05/G08）：审计清单余量 19 个（`@dnd-kit/*`、`@mdxeditor/editor`、`framer-motion`、`next-auth`、`next-intl`、`sharp`、`zod`、`zustand` 等）+ 组件删除后的级联孤儿 28 个（`recharts`、`embla-carousel-react`、`cmdk`、`vaul`、`sonner`、`react-hook-form`、19 个 `@radix-ui/react-*` 等）。`dependencies` 从 66 收敛到 19，保留项全部有实证引用
+- `react-dom` 移出直接依赖后由 `next` 的 peerDependencies 自动安装（实测 19.2.3 在位）
+
+### Verified
+- `tsc --noEmit` 零错误；`bun run lint` 零违规；`bun run build`（含类型检查）成功 12.4s；`site-check.mjs` standalone 45 项通过
+- `bun install --frozen-lockfile` 通过（543 installs / 603 packages，清理后）；`/api/validate` 端到端实测返回结构化校验结果（API → 子进程 → axp 校验器全链路）
+
 ## [1.0.5] - 2026-11-15
 
 > 质量门禁批次（ROADMAP E06–E09）；**规范语义不变**，`axp` 格式版本仍为 `1.0.0`。

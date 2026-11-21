@@ -1,8 +1,8 @@
 # AXP · 一次性全部任务总账
 
 > 状态：Stable
-> 适用：`Ultra-Guru/axp` @ `main` · v1.0.5
-> 说明：**这一份列全整个项目的所有任务**，包含已完成的、进行中的、还没开始的；不再分批补。状态以 2026-11-15 质量门禁批次（v1.0.5）结束后的实测结果为准。
+> 适用：`Ultra-Guru/axp` @ `main` · v1.0.6
+> 说明：**这一份列全整个项目的所有任务**，包含已完成的、进行中的、还没开始的；不再分批补。状态以 2026-11-21 依赖清理批次（v1.0.6）结束后的实测结果为准。
 > 图例：✅ 已完成并验证　🟡 部分完成　⬜ 未开始　⚠️ 有风险 / 待实测　🔒 本轮刻意未动
 
 ## 状态速查
@@ -15,9 +15,9 @@
 | D 交互式文档站点 | 11 | 3 | 2 | 1 | 0 |
 | E CI / 构建 / 部署 | 9 | 0 | 1 | 0 | 0 |
 | F 真机与生态 | 2 | 3 | 4 | 1 | 0 |
-| G 治理与清理 | 5 | 1 | 4 | 0 | 0 |
+| G 治理与清理 | 8 | 0 | 2 | 0 | 0 |
 
-**P0 已全部清零（E03 本地 + CI 双实测；E04 首次运行即绿；v1.0.5 补齐 E06–E09 质量门禁，并触发 CI 首跑捕获 Prisma 死代码 → G07 随批完成）。当前最高优先级批次：G05/G06 依赖与组件清理。**
+**P0 已全部清零；E06–E09 质量门禁与 G04–G08 依赖清理均已完成（v1.0.5 / v1.0.6）。当前最高优先级批次：D14 / D15 / D16 站点数据自推导。**
 
 ---
 
@@ -130,10 +130,10 @@
 | G02 | 移除 `allowedDevOrigins` 生成环境残留 | ✅ | P2 | 配置中无第三方域名 | `next.config.ts` |
 | G03 | 完整审计报告 + 任务总账 + 改动清单 | ✅ | — | 三份文档互相链接可达 | `AUDIT.md` / 本文件 / `PATCHES.md` |
 | G04 | `bun.lock` workspace name 改为 `axp` | ✅ | P2 | v1.0.5 随 Prisma 移除重生成 lock 时同步修正 | `bun.lock` |
-| G05 | **清理剩余未使用依赖并重生成 `bun.lock`**（原 21 个，Prisma 2 个已随 G07 移除，余 19 个） | ⬜ | P1 | 删除后 `bun install --frozen-lockfile` 仍通过 | `package.json` + `bun.lock` |
-| G06 | 删除 32 个未使用 shadcn 组件 | ⬜ | P2 | 站点渲染不变、lint 通过 | `src/components/ui/` |
+| G05 | **清理剩余未使用依赖并重生成 `bun.lock`** | ✅ | P1 | v1.0.6：与 G06 合并执行——删组件后二次推导，共移除 47 个（审计余量 19 + 级联孤儿 28），`dependencies` 66 → 19；`--frozen-lockfile` 通过（543 installs / 603 packages） | `package.json` + `bun.lock` |
+| G06 | 删除未使用 shadcn 组件 | ✅ | P2 | v1.0.6：可达性闭包分析删 36 个（比审计的 32 多 4 个，v1.0.4/1.0.5 死导入清理所致），保留 12 个全部有存活引用；站点渲染与全套装检不变 | `src/components/ui/` |
 | G07 | 删除 Prisma 模板（`schema.prisma` + `src/lib/db.ts` + db 脚本） | ✅ | P1 | v1.0.5：E07 开启类型检查后 CI 首跑即暴露干净环境下构建失败，随批整删 | `prisma/` / `src/lib/db.ts` / `package.json` |
-| G08 | 依赖清理后重新生成并复核 lockfile | 🟡 | P1 | Prisma 批次已重生成并通过 frozen 校验（v1.0.5）；G05 清理后需再次重生成 | `bun.lock` |
+| G08 | 依赖清理后重新生成并复核 lockfile | ✅ | P1 | v1.0.6：G05/G06 后重生成（Removed: 47）并复跑 `--frozen-lockfile` 验证通过 | `bun.lock` |
 | G09 | `axp/` 作为独立仓库拆出的可复现流程 | ⬜ | P3 | 按 `github-setup.md` 拆出后自检全绿 | `axp/docs/github-setup.md` |
 | G10 | 发 `spec-v1.0.0` tag 与 Release 产物 | ⬜ | P2 | `axp-spec-<version>.zip` 可下载 | GitHub Releases |
 
@@ -145,7 +145,7 @@
 
 1. ~~**E03 / E04**：在有 Bun 的机器跑 `bun install --frozen-lockfile && bun run build && node scripts/site-check.mjs`，把构建日志贴回来；若首次失败，按日志修类型/字体，再动 `ignoreBuildErrors`~~ ✅ v1.0.4 完成
 2. ~~**E06 / E07 / E08 / E09**：把质量门禁补齐，让 lint 与 build 真正能挡问题~~ ✅ v1.0.5 完成
-3. **G05 / G06 → G08**：一批清理模板残留（余 19 个未用依赖 + 32 个未用组件），`bun install` 重生成 lock，确认 CI 仍绿（Prisma 批次已验证过该流程）
+3. ~~**G05 / G06 / G08**：一批清理模板残留（47 个依赖 + 36 个组件），重生成 lock，确认 CI 仍绿~~ ✅ v1.0.6 完成
 4. **D14 / D15 / D16**：消除站点硬编码与无效渲染，让数据从 `axp/` 自动推导
 5. **F04 / F05 / F06**：真机适配器与 Android 骨架编译，这是从「格式规范」走向「能用的 Android 生态」的关键一跳
 6. **F07 / F08 / E10 / G10**：签名信任链、部署文档、Release 产物，然后对外发布

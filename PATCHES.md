@@ -4,6 +4,43 @@
 
 ---
 
+# v1.0.6 · 依赖与模板清理批次（ROADMAP G05/G06/G08）
+
+> 基线：`Ultra-Guru/axp` @ `1676785`（v1.0.5）
+> 性质：只删不写。`axp/` 内规范 / schema / 校验器 / CLI / 运行时 / 示例**逐字节未改动**（仅 CHANGELOG 追加 1.0.6 段）。
+
+## 1. 改了什么
+
+| # | 文件 | 改动 | 为什么 |
+|---|---|---|---|
+| 1 | `src/components/ui/`（36 个文件） | 删除不可达组件：alert · alert-dialog · aspect-ratio · avatar · breadcrumb · calendar · carousel · chart · checkbox · command · context-menu · dialog · drawer · dropdown-menu · form · hover-card · input-otp · menubar · navigation-menu · pagination · popover · progress · radio-group · resizable · scroll-area · select · separator · sidebar · skeleton · slider · sonner · table · tabs · textarea · toggle · toggle-group | G06：可达性闭包分析（根 = `ui/` 目录外被引用的组件，再沿组件间互相引用传递）。保留 12 个：accordion / badge / button / card / collapsible / input / label / sheet / switch / toast / toaster / tooltip |
+| 2 | `package.json` | 移除 47 个未用依赖（`dependencies` 66 → 19）；`version` → 1.0.6 | G05/G08：先删组件再做第二轮依赖推导——19 个审计余量（`@dnd-kit/*`、`@mdxeditor/editor`、`framer-motion`、`next-auth`、`next-intl`、`sharp`、`zod`、`zustand` 等）+ 28 个级联孤儿（`recharts`、`embla-carousel-react`、`cmdk`、`vaul`、`sonner`、`react-hook-form`、19 个 `@radix-ui/react-*` 等）。只删组件不清孤儿依赖会让 lockfile 继续携带死重量 |
+| 3 | `bun.lock` | 重生成（Removed: 47） | 依赖变更必须同步 lock；`--frozen-lockfile` 复核通过 |
+| 4 | `axp/CHANGELOG.md` / `README.md` / `ROADMAP-ALL-TASKS.md` / `PATCHES.md` | 版本 1.0.6、变更记录、任务状态同步 | 文档与仓库实际一致 |
+
+> 特殊说明：`react-dom` 移出直接依赖后，经 `next` 的 `peerDependencies`（`^18.2.0 || ^19`）自动安装，node_modules 实测 19.2.3 在位，构建与 dev 均正常。`@radix-ui/react-dialog` 因被保留的 `sheet.tsx` 引用而保留。
+
+## 2. 验证
+
+| 检查 | 结果 |
+|---|---|
+| `bunx tsc --noEmit` | 零错误 |
+| `bun run lint` | 零违规（含 exhaustive-deps error 级） |
+| `bun run build`（含类型检查） | 成功，12.4s |
+| `node scripts/site-check.mjs` | standalone 45 项通过 |
+| `bun install --frozen-lockfile` | 通过（543 installs / 603 packages，清理后） |
+| dev server + `/api/validate` 端到端 | 200；结构化校验结果正常（API → 临时目录 → 子进程 → axp 校验器全链路） |
+
+## 3. 怎么回滚
+
+| 想撤掉 | 做法 |
+|---|---|
+| 1（组件） | `git checkout 1676785 -- src/components/ui/` |
+| 2–3（依赖与 lock） | `git checkout 1676785 -- package.json bun.lock && bun install` |
+| 4（文档） | 按 diff 回退对应段落 |
+
+---
+
 # v1.0.5 · 质量门禁批次（ROADMAP E06–E09）
 
 > 基线：`Ultra-Guru/axp` @ `e4e7de0`（v1.0.4）
