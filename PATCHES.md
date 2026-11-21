@@ -21,17 +21,24 @@
 | 6 | `.github/workflows/ci.yml` | `docs-links` 从仅扫 `axp/` 扩展到全仓（跳过 `node_modules` / `.git` 等） | E06：根目录 README / AUDIT / PATCHES / ROADMAP 入检 |
 | 7 | `tsconfig.json` | exclude 追加 `skills` / `upload` / `mini-services` / `db` | 沙盒目录不入类型检查口径，本地与 CI 一致 |
 | 8 | `package.json` / `axp/CHANGELOG.md` / `README.md` / `ROADMAP-ALL-TASKS.md` / `PATCHES.md` | 版本 1.0.5、变更记录、任务状态同步 | 文档与仓库实际一致 |
+| 9 | `next.config.ts` | `allowedDevOrigins` 改为可选 `AXP_DEV_ORIGIN` 环境变量钩子 | 本地/沙盒预览域名永不入仓（.env 已 gitignore）；CI 与其他开发者零感知 |
+| 10 | `prisma/schema.prisma` + `src/lib/db.ts` + `package.json`（4 个 db:* 脚本与 2 个 prisma 依赖） | 整删 Prisma 模板（G07） | E07 开启类型检查后 CI 首跑即败：干净环境（bun 默认不跑 postinstall）无生成 client，`PrismaClient` 导出缺失；本地被历史 node_modules 掩蔽。仓库内零真实消费者 |
+| 11 | `bun.lock` | 移除 prisma 子树并重生成；workspace name `nextjs_tailwind_shadcn_ts` → `axp`（G04） | 依赖变更必须同步 lock；顺带修正模板残留名 |
+
+> 说明：#10/#11 发生在 dec713c 之后，是对「CI 首跑捕获 Prisma 类型错误」的修复；两项与 E06–E09 同属 v1.0.5 质量门禁批次。
 
 ## 2. 验证
 
 | 检查 | 结果 |
 |---|---|
-| `bunx tsc --noEmit` | 零错误 |
+| `bunx tsc --noEmit` | 零错误（Prisma 删除前后各跑一次） |
 | `bun run lint` | 零违规（含 exhaustive-deps error 级） |
-| `bun run build`（含类型检查） | 成功，13.4s |
+| `bun run build`（含类型检查） | 成功，13.0s |
 | `node scripts/site-check.mjs` | standalone 45 项通过 |
+| `bun install --frozen-lockfile` | 通过（830 installs / 898 packages，Prisma 移除后） |
 | 全仓链接检查（CI 同款脚本） | 42 md / 203 链接 / 0 断链 |
 | StrictMode 浏览器实测 | 无 hydration 报错；移动端 Sheet / 演练场 / 文档库正常 |
+| `AXP_DEV_ORIGIN` 钩子实测 | 带 env 求值 config → `allowedDevOrigins=[<预览域名>]`；不带 → 字段省略；未配置域名的跨源请求有警告、已配置域名无警告 |
 
 ## 3. 怎么回滚
 
@@ -43,6 +50,8 @@
 | 6 | `git checkout e4e7de0 -- .github/workflows/ci.yml` |
 | 7 | `git checkout e4e7de0 -- tsconfig.json` |
 | 8 | 文档按 diff 回退对应段落 |
+| 9 | 删除 `next.config.ts` 中 `AXP_DEV_ORIGIN` 展开行 |
+| 10–11 | `git checkout dec713c -- prisma/ src/lib/db.ts package.json bun.lock && bun install`（dec713c 为 Prisma 删除前的提交） |
 
 ---
 

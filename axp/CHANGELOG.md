@@ -16,12 +16,16 @@
 - `use-toast.ts` 的 `actionTypes` 改为纯类型声明（消除「仅作类型使用」的 unused 告警与运行时对象）
 - 清理 4 处未使用导入（`SheetTrigger` / `Card` / `CardContent` / `ReactNode` / `Tooltip` 三件套）
 
+### Removed
+- Prisma 模板残留（G07）：`prisma/schema.prisma`、`src/lib/db.ts`（仓库内零消费者）、4 个 `db:*` 脚本、`prisma` + `@prisma/client` 两个依赖，并重生成 `bun.lock`（顺带修正 workspace name `nextjs_tailwind_shadcn_ts` → `axp`，G04）。动因：E07 开启构建期类型检查后，**CI 首跑即失败**——干净环境（bun 默认不执行依赖 postinstall）下 `@prisma/client` 无生成产物、`PrismaClient` 导出缺失，而本地因历史生成的 node_modules 掩蔽了该错误。此为门禁有效性的首次实证
+
 ### Added
 - CI `docs-links` job 从仅扫 `axp/` 扩展到全仓（根目录 README / AUDIT / PATCHES / ROADMAP 一并检查，E06）——42 个 md / 203 本地链接 / 0 断链
 - `tsconfig.json` 排除沙盒目录（`skills` / `upload` / `mini-services` / `db`），保证本地与 CI 类型检查口径一致
+- `next.config.ts` 新增可选 `AXP_DEV_ORIGIN` 环境变量钩子：本地开发如需放行预览面板跨源请求，在 `.env`（不入库）中定义即可，仓库不再携带任何环境专用域名
 
 ### Verified
-- `tsc --noEmit` 零错误；`bun run lint` 零违规；`bun run build`（含类型检查）成功；`site-check.mjs` standalone 45 项通过
+- `tsc --noEmit` 零错误；`bun run lint` 零违规；`bun run build`（含类型检查）成功；`site-check.mjs` standalone 45 项通过；`bun install --frozen-lockfile` 通过（Prisma 移除后 830 installs / 898 packages）
 - StrictMode 下页面无 hydration 报错；移动端目录 Sheet、演练场校验、文档库渲染实测正常
 
 ## [1.0.4] - 2026-11-15

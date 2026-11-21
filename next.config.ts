@@ -4,6 +4,13 @@ const nextConfig: NextConfig = {
   output: "standalone",
 
   /**
+   * 本地开发预览跨源放行（可选，不入库）：
+   * 在 .env（已被 .gitignore 忽略）里定义 AXP_DEV_ORIGIN=https://<预览域名> ，
+   * 即可放行该域名对 /_next/* 静态资源的跨源请求；不定义则无任何额外放行。
+   */
+  ...(process.env.AXP_DEV_ORIGIN ? { allowedDevOrigins: [process.env.AXP_DEV_ORIGIN] } : {}),
+
+  /**
    * 站点在运行时通过 path.join(process.cwd(), "axp") 读取规范项目，
    * Next.js 的 output file tracing 无法静态追踪这条拼接出来的路径。
    * 把 axp/ 全量纳入追踪，保证 standalone 部署根自带数据；
