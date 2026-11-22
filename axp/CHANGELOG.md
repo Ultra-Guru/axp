@@ -2,6 +2,24 @@
 
 本文件记录规范与工具链的变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.0.7] - 2026-11-21
+
+> 站点数据自推导批次（ROADMAP D14/D15/D16）；**规范语义不变**，`axp` 格式版本仍为 `1.0.0`。
+> 本条记录的仍是外层 Next.js 文档站点与 CI 的变化，`axp/` 内规范 / schema / 校验器 / CLI / 运行时 / 示例均未改动。
+
+### Changed
+- 站点统计从 `axp/` 真实推导（D15）：`loadSiteData()` 不再手写测试数——构建期（或 dev 首次渲染）真实执行两套零依赖 Node 测试（`run-tests.mjs --json` 的 `total`、`smoke.mjs` 的 `ALL N ASSERTIONS PASSED`）解析汇总行；交叉复核优先真实执行 `python3 schema-crosscheck.py`，环境无 python3/jsonschema 时退回结构化推导（`2 + 2×示例数 + schema 用例 + 2 + 2×业务用例`，与真实执行结果 43 逐项核对一致）。套件执行失败即让站点构建失败——站点宣称「全绿」，套件挂了站点就不应构建出来
+- 文档 / 示例 / 规范文件数全部 fs 推导：`spec/` 目录文件数、示例数、文档库四组计数（规范正文 / 教程 / 参考实现 / 仓库根），文档库导语与工具链卡片文案由数字模板化生成；`SELF_CHECKS` / `TOOLCHAIN` 从静态常量改为接收服务端注入的 `RepoCounts`
+- 路线图口径统一（D14）：`ROADMAP` 条目新增 `note` 实现状态注记——M2「Node 参考运行时已跑通 · Android 真机骨架未编译验证」、M3「规范 / 示例 / 教程就位 · 真机域适配器待补」、M4「gradient 选择算法已实现 · Shizuku L3 通道待接」，与 README / `spec/01-format.md` §12 进度段口径一致；区块导语去掉会漂移的「截至 v1.0.x」版本锚点
+
+### Fixed
+- `library-section` 的 `fetchDoc` 无效重建（D16）：已加载内容与在途请求移入 ref（`cacheRef` / `inflightRef`），回调依赖数组从 `[content]` 清空为 `[]`——每次文档加载不再使 `fetchDoc` → `openDoc` → 注册 effect 整链失效重建；顺带修复同文档连点的在途重复请求
+
+### Verified
+- `tsc --noEmit` 零错误；`bun run lint` 零违规；`bun run build`（含类型检查，prerender 中真实执行三套测试）成功；`site-check.mjs` standalone 45 项通过
+- 页面实测：推导数字 31/31、43/43、30/30、4/4、规范正文 9 篇全部正确渲染；结构化回退与真实执行交叉核对一致（43=43）
+- 浏览器端到端：文档库切换 FAQ ↔ 01-format 复访零新请求（缓存生效）、路线图三条注记可见、移动端 Sheet 正常、控制台零错误
+
 ## [1.0.6] - 2026-11-21
 
 > 依赖与模板清理批次（ROADMAP G05/G06/G08）；**规范语义不变**，`axp` 格式版本仍为 `1.0.0`。

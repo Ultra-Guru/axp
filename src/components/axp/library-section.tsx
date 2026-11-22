@@ -28,24 +28,35 @@ export function LibrarySection({
   const [error, setError] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const knownDocs = useRef(new Set(docs.map((d) => d.path)));
+  /** D16：已加载内容与在途请求存 ref —— fetchDoc 不再依赖 content state，消除无效重建 */
+  const cacheRef = useRef<Record<string, string>>({});
+  const inflightRef = useRef(new Map<string, Promise<void>>());
 
   const fetchDoc = useCallback(
     async (path: string) => {
-      if (content[path]) return;
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`/api/doc?path=${encodeURIComponent(path)}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = (await res.json()) as { content: string };
-        setContent((c) => ({ ...c, [path]: data.content }));
-      } catch (e) {
-        setError((e as Error).message);
-      } finally {
-        setLoading(false);
-      }
+      if (cacheRef.current[path]) return;
+      const running = inflightRef.current.get(path);
+      if (running) return running;
+      const p = (async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const res = await fetch(`/api/doc?path=${encodeURIComponent(path)}`);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = (await res.json()) as { content: string };
+          cacheRef.current[path] = data.content;
+          setContent((c) => ({ ...c, [path]: data.content }));
+        } catch (e) {
+          setError((e as Error).message);
+        } finally {
+          setLoading(false);
+          inflightRef.current.delete(path);
+        }
+      })();
+      inflightRef.current.set(path, p);
+      return p;
     },
-    [content]
+    []
   );
 
   const openDoc = useCallback(
@@ -82,12 +93,15 @@ export function LibrarySection({
     (g) => g.items.length > 0
   );
 
+  /** D15：文档计数从 docs 列表推导（数字变化无需手改文案） */
+  const countGroup = (g: string) => docs.filter((d) => d.group === g).length;
+
   return (
     <Section
       id="library"
       kicker="spec/ + docs/ 全文"
       title="文档库"
-      lead="规范正文 9 篇、教程与指南 11 篇、参考实现文档 3 篇与仓库根文件——全部原文渲染。文档内的相对链接已相互打通，点击即可跳转。"
+      lead={`规范正文 ${countGroup("规范正文 spec/")} 篇、教程与指南 ${countGroup("教程与指南 docs/")} 篇、参考实现文档 ${countGroup("参考实现")} 篇与仓库根文件——全部原文渲染。文档内的相对链接已相互打通，点击即可跳转。`}
     >
       <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[300px_1fr]">
         <div className="space-y-3">

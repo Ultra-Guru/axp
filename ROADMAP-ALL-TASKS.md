@@ -1,8 +1,8 @@
 # AXP · 一次性全部任务总账
 
 > 状态：Stable
-> 适用：`Ultra-Guru/axp` @ `main` · v1.0.6
-> 说明：**这一份列全整个项目的所有任务**，包含已完成的、进行中的、还没开始的；不再分批补。状态以 2026-11-21 依赖清理批次（v1.0.6）结束后的实测结果为准。
+> 适用：`Ultra-Guru/axp` @ `main` · v1.0.7
+> 说明：**这一份列全整个项目的所有任务**，包含已完成的、进行中的、还没开始的；不再分批补。状态以 2026-11-21 站点数据自推导批次（v1.0.7）结束后的实测结果为准。
 > 图例：✅ 已完成并验证　🟡 部分完成　⬜ 未开始　⚠️ 有风险 / 待实测　🔒 本轮刻意未动
 
 ## 状态速查
@@ -12,12 +12,12 @@
 | A 规范与格式 | 12 | 0 | 0 | 0 | 0 |
 | B 工具链与验证 | 11 | 0 | 0 | 0 | 0 |
 | C 文档与教程 | 9 | 0 | 0 | 0 | 0 |
-| D 交互式文档站点 | 11 | 3 | 2 | 1 | 0 |
+| D 交互式文档站点 | 14 | 0 | 2 | 1 | 0 |
 | E CI / 构建 / 部署 | 9 | 0 | 1 | 0 | 0 |
 | F 真机与生态 | 2 | 3 | 4 | 1 | 0 |
 | G 治理与清理 | 8 | 0 | 2 | 0 | 0 |
 
-**P0 已全部清零；E06–E09 质量门禁与 G04–G08 依赖清理均已完成（v1.0.5 / v1.0.6）。当前最高优先级批次：D14 / D15 / D16 站点数据自推导。**
+**P0 已全部清零；质量门禁（E06–E09）、依赖清理（G04–G08）与站点数据自推导（D14–D16）均已完成。剩余批次：F04–F06 真机适配（需 Android Studio 环境）、F07/F08 签名信任链、E10/G09/G10 发布工程。**
 
 ---
 
@@ -85,9 +85,9 @@
 | D11 | **standalone 产物自带 `axp/` 数据** | ✅ | P0 | `.next/standalone/axp/spec/01-format.md` 存在 | `next.config.ts` + `package.json` |
 | D12 | 构建产物自检脚本 | ✅ | P0 | `node scripts/site-check.mjs` 退出码 0 | `scripts/site-check.mjs` |
 | D13 | `readDocContent` 前缀校验加固 | ✅ | P1 | 用 `path.sep` 判断 | `src/lib/axp-server.ts` |
-| D14 | 路线图口径统一（M2 的 Node ✅ / Android ⚠️） | 🟡 | P1 | 站点 `ROADMAP` 与 README 一致 | `src/components/axp/data.ts` |
-| D15 | 站点硬统计改为从 `axp/` 自动推导 | 🟡 | P1 | 测试数 / 文档数变化后无需手改 | `axp-server.ts` / `data.ts` |
-| D16 | `library-section` 消除 `fetchDoc` 无效重建 | 🟡 | P2 | 用 ref 缓存已加载内容，去掉 `content` 依赖 | `library-section.tsx` |
+| D14 | 路线图口径统一（M2 的 Node ✅ / Android ⚠️） | ✅ | P1 | v1.0.7：ROADMAP 条目新增 `note` 实现状态注记（M2/M3/M4），与 README / spec §12 口径一致；导语去掉版本锚点 | `src/components/axp/data.ts` / `sections-host.tsx` |
+| D15 | 站点硬统计改为从 `axp/` 自动推导 | ✅ | P1 | v1.0.7：测试数构建期真实执行两套 Node 套件解析汇总行（失败即构建失败），交叉复核无 python 时结构化回退（43 与真实执行核对一致）；文档 / 示例 / 规范文件数全部 fs 推导 | `axp-server.ts` / `data.ts` |
+| D16 | `library-section` 消除 `fetchDoc` 无效重建 | ✅ | P2 | v1.0.7：内容与在途请求移入 ref，依赖数组清空为 `[]`；实测切回复访零新请求 | `library-section.tsx` |
 | D17 | 文档库支持锚点深链（`#library&doc=…` 已起步） | ⬜ | P2 | 刷新后仍定位到同一文档 | `axp-site.tsx` / `library-section.tsx` |
 | D18 | 校验器演练场支持「下载校验报告 / 复制命令」 | ⬜ | P3 | 一键导出 JSON 结果 | `playground-section.tsx` |
 | D19 | `next/font/google` 改本地或自托管字体 | ⚠️ | P1 | 断网环境 `next build` 仍成功 | `src/app/layout.tsx` |
@@ -146,8 +146,8 @@
 1. ~~**E03 / E04**：在有 Bun 的机器跑 `bun install --frozen-lockfile && bun run build && node scripts/site-check.mjs`，把构建日志贴回来；若首次失败，按日志修类型/字体，再动 `ignoreBuildErrors`~~ ✅ v1.0.4 完成
 2. ~~**E06 / E07 / E08 / E09**：把质量门禁补齐，让 lint 与 build 真正能挡问题~~ ✅ v1.0.5 完成
 3. ~~**G05 / G06 / G08**：一批清理模板残留（47 个依赖 + 36 个组件），重生成 lock，确认 CI 仍绿~~ ✅ v1.0.6 完成
-4. **D14 / D15 / D16**：消除站点硬编码与无效渲染，让数据从 `axp/` 自动推导
-5. **F04 / F05 / F06**：真机适配器与 Android 骨架编译，这是从「格式规范」走向「能用的 Android 生态」的关键一跳
+4. ~~**D14 / D15 / D16**：消除站点硬编码与无效渲染，让数据从 `axp/` 自动推导~~ ✅ v1.0.7 完成
+5. **F04 / F05 / F06**：真机适配器与 Android 骨架编译，这是从「格式规范」走向「能用的 Android 生态」的关键一跳（需 Android Studio 环境）
 6. **F07 / F08 / E10 / G10**：签名信任链、部署文档、Release 产物，然后对外发布
 
 对应路线图：M1 ✅ → M2 ✅ / ⚠️ → M2.5 ✅ → M3 🟡 → M4 🟡 → M5 ✅ → M6 ⬜ → M7 ⬜。

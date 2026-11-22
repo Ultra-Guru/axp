@@ -366,7 +366,14 @@ export function AxpSite({ data }: { data: SiteData }) {
             baseManifest={baseManifest}
           />
           <LibrarySection docs={data.docs} />
-          <ToolingSection />
+          <ToolingSection
+            counts={{
+              examples: data.stats.examples,
+              validatorTests: data.stats.validatorTests,
+              crossCheck: data.stats.crossCheck,
+              runtimeAssertions: data.stats.runtimeAssertions,
+            }}
+          />
         </main>
       </div>
 

@@ -477,12 +477,21 @@ export const HOST_LEVELS = [
   { level: "AXP-3", req: "AXP-2 + 权限梯度 L0–L5 + hotReload{} 全语义" },
 ];
 
-export const ROADMAP: { milestone: string; deliver: string; exit: string; status: "done" | "partial" | "todo" }[] = [
+export interface RoadmapEntry {
+  milestone: string;
+  deliver: string;
+  exit: string;
+  status: "done" | "partial" | "todo";
+  /** 实现状态细化（与 README / spec §12 口径一致，如 M2 的 Node ✅ / Android ⚠️） */
+  note?: string;
+}
+
+export const ROADMAP: RoadmapEntry[] = [
   { milestone: "M1 格式定稿", deliver: "schema 定稿 + validator + CLI pack/new + 3 个 example", exit: "axp validate 全绿", status: "done" },
-  { milestone: "M2 最小宿主", deliver: "装载 + tools 调度 + L0/L1", exit: "纯 JS 插件在真机被 Agent 调通", status: "done" },
+  { milestone: "M2 最小宿主", deliver: "装载 + tools 调度 + L0/L1", exit: "纯 JS 插件在真机被 Agent 调通", status: "done", note: "Node 参考运行时已跑通 · Android 真机骨架未编译验证" },
   { milestone: "M2.5 热加载", deliver: "hotReload + 隔离类加载器 + 每次验签 + 回滚 + UI 重建", exit: "不重启宿主替换 ui.panel 与一个 tool，状态保留、出错回滚", status: "done" },
-  { milestone: "M3 感知", deliver: "surfaces + watchable + fs/screen/notification 三域 + L2", exit: "插件订阅屏幕流拿到增量", status: "partial" },
-  { milestone: "M4 提权", deliver: "Shizuku L3 + gradient 降级 + 审计", exit: "同一 tool 在 L2/L3 自动切换实现", status: "partial" },
+  { milestone: "M3 感知", deliver: "surfaces + watchable + fs/screen/notification 三域 + L2", exit: "插件订阅屏幕流拿到增量", status: "partial", note: "规范 / 示例 / 教程就位 · 真机域适配器待补" },
+  { milestone: "M4 提权", deliver: "Shizuku L3 + gradient 降级 + 审计", exit: "同一 tool 在 L2/L3 自动切换实现", status: "partial", note: "gradient 选择算法已实现 · Shizuku L3 通道待接" },
   { milestone: "M5 全组件", deliver: "knowledge/agents/events 全语义 + ui.dsl + 多实例", exit: "综合示例完整跑通", status: "done" },
   { milestone: "M6 分发", deliver: "签名信任链 + session-install + 索引格式", exit: "三种来源安装成功", status: "todo" },
   { milestone: "M7 生态", deliver: "宿主合规认证 + 示例库", exit: "至少 2 个第三方宿主达 AXP-2", status: "todo" },
@@ -496,32 +505,44 @@ export const CLI_COMMANDS = [
   { cmd: "axp install <file.axp>", desc: "宿主侧：调用宿主安装接口（session-install），实际装载由宿主完成" },
 ];
 
-export const SELF_CHECKS = [
-  { name: "行为用例", cmd: "node validator/test/run-tests.mjs", n: "31/31" },
-  { name: "独立引擎交叉复核", cmd: "python3 validator/test/schema-crosscheck.py", n: "43/43" },
-  { name: "参考运行时端到端", cmd: "node runtime/test/smoke.mjs", n: "30/30" },
-  { name: "示例清单校验", cmd: "for d in examples/*/; do node validator/src/validate.mjs \"$d\"; done", n: "4/4" },
-];
+/** 仓库真实推导的计数（D15：由服务端 loadSiteData() 从 axp/ 计算后注入，站点不手写数字） */
+export interface RepoCounts {
+  examples: number;
+  validatorTests: number;
+  crossCheck: number;
+  runtimeAssertions: number;
+}
 
-export const TOOLCHAIN = [
-  {
-    name: "validator/",
-    desc: "离线校验器：schema + 安全规则 + 引用完整性，零依赖；31 条行为用例 + Python jsonschema 独立交叉复核 43 项",
-  },
-  {
-    name: "cli/",
-    desc: "axp 命令行：new / validate / pack / inspect / install",
-  },
-  {
-    name: "runtime/",
-    desc: "★ 可运行参考宿主（Node，声明 AXP-3）：9 步装载 / gradient / Surface / UI / 热加载，30 条端到端断言",
-  },
-  {
-    name: "sdk/sdk-js/",
-    desc: "TypeScript 类型定义",
-  },
-  {
-    name: "reference-host/",
-    desc: "Android/Kotlin 真机骨架（源码，未编译验证）：HostBridge、InMemoryDexClassLoader 隔离、Compose 绑定示意",
-  },
-];
+export function selfChecks(c: RepoCounts) {
+  return [
+    { name: "行为用例", cmd: "node validator/test/run-tests.mjs", n: `${c.validatorTests}/${c.validatorTests}` },
+    { name: "独立引擎交叉复核", cmd: "python3 validator/test/schema-crosscheck.py", n: `${c.crossCheck}/${c.crossCheck}` },
+    { name: "参考运行时端到端", cmd: "node runtime/test/smoke.mjs", n: `${c.runtimeAssertions}/${c.runtimeAssertions}` },
+    { name: "示例清单校验", cmd: "for d in examples/*/; do node validator/src/validate.mjs \"$d\"; done", n: `${c.examples}/${c.examples}` },
+  ];
+}
+
+export function toolchain(c: RepoCounts) {
+  return [
+    {
+      name: "validator/",
+      desc: `离线校验器：schema + 安全规则 + 引用完整性，零依赖；${c.validatorTests} 条行为用例 + Python jsonschema 独立交叉复核 ${c.crossCheck} 项`,
+    },
+    {
+      name: "cli/",
+      desc: "axp 命令行：new / validate / pack / inspect / install",
+    },
+    {
+      name: "runtime/",
+      desc: `★ 可运行参考宿主（Node，声明 AXP-3）：9 步装载 / gradient / Surface / UI / 热加载，${c.runtimeAssertions} 条端到端断言`,
+    },
+    {
+      name: "sdk/sdk-js/",
+      desc: "TypeScript 类型定义",
+    },
+    {
+      name: "reference-host/",
+      desc: "Android/Kotlin 真机骨架（源码，未编译验证）：HostBridge、InMemoryDexClassLoader 隔离、Compose 绑定示意",
+    },
+  ];
+}

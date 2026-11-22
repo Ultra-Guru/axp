@@ -4,6 +4,48 @@
 
 ---
 
+# v1.0.7 · 站点数据自推导批次（ROADMAP D14/D15/D16）
+
+> 基线：`Ultra-Guru/axp` @ `103a171`（v1.0.6）
+> 性质：站点不再手写仓库统计数字，路线图口径与 README / spec 对齐。`axp/` 内规范 / schema / 校验器 / CLI / 运行时 / 示例**逐字节未改动**（仅 CHANGELOG 追加 1.0.7 段）。
+
+## 1. 改了什么
+
+| # | 文件 | 改动 | 为什么 |
+|---|---|---|---|
+| 1 | `src/lib/axp-server.ts` | 统计推导重构：`spec/` 文件数 fs 扫描；`validatorTests` / `runtimeAssertions` 构建期真实执行两套零依赖 Node 测试并解析汇总行（`run-tests.mjs --json` 的 `total` / `smoke.mjs` 的 `ALL N`）；`crossCheck` 优先真实执行 python3，无 python 环境退回结构化推导（`2 + 2×示例 + cases + 2 + 2×业务用例`）；文档四组计数按 group 汇总；测试数按进程缓存（dev 刷新不重跑，axp/ 文件改动仍即时反映）；删去从未被消费的 `loadingSteps` / `hostLevels` 死字段 | D15：测试数 / 文档数变化后无需手改。套件执行失败 → 站点构建失败（站点宣称全绿，不能展示挂了套件的数字）；交叉复核的「是否通过」仍由 CI axp-selfcheck 门禁，结构化回退只提供计数 |
+| 2 | `src/components/axp/data.ts` | `SELF_CHECKS` / `TOOLCHAIN` 从静态常量改为 `selfChecks(c)` / `toolchain(c)` 函数，数字由服务端注入的 `RepoCounts` 模板化 | D15：同一数字只在一处推导，客户端零硬编码 |
+| 3 | `src/components/axp/sections-host.tsx` | `ToolingSection` 接收 `counts` prop；「一键自检」代码块注释数字模板化；`RoadmapSection` 渲染新增的 `note` 实现状态注记 | D14 + D15 |
+| 4 | `src/components/axp/data.ts`（ROADMAP） | 条目新增 `note?` 字段：M2「Node 参考运行时已跑通 · Android 真机骨架未编译验证」、M3「规范 / 示例 / 教程就位 · 真机域适配器待补」、M4「gradient 选择算法已实现 · Shizuku L3 通道待接」；区块导语去掉「截至 v1.0.3」版本锚点 | D14：与 README「M2 ✅（Node）/ ⚠️（Android 骨架）」与 spec §12 进度段口径统一 |
+| 5 | `src/components/axp/library-section.tsx` | 导语文档计数从 `docs` prop 按组推导；`fetchDoc` 的已加载内容与在途请求移入 `cacheRef` / `inflightRef`，依赖数组从 `[content]` 清空为 `[]` | D15（计数）+ D16：消除每次加载文档后 `fetchDoc → openDoc → 注册 effect` 的无效重建链；顺带修复同文档连点的在途重复请求 |
+| 6 | `src/components/axp/axp-site.tsx` | 向 `ToolingSection` 传入 `data.stats` 的计数切片 | 数据流接线 |
+| 7 | `package.json` / `axp/CHANGELOG.md` / `README.md` / `ROADMAP-ALL-TASKS.md` / `PATCHES.md` | 版本 1.0.7、变更记录、任务状态同步 | 文档与仓库实际一致 |
+
+## 2. 验证
+
+| 检查 | 结果 |
+|---|---|
+| `bunx tsc --noEmit` | 零错误 |
+| `bun run lint` | 零违规（含 exhaustive-deps error 级） |
+| `bun run build`（含类型检查） | 成功；prerender 中真实执行三套测试 |
+| `node scripts/site-check.mjs` | standalone 45 项通过 |
+| 结构化回退 vs 真实执行 | `2 + 2×4 + 17 + 2 + 2×7 = 43` 与 `43 passed, 0 failed` 交叉核对一致 |
+| 页面渲染实测 | 31/31、43/43、30/30、4/4、规范正文 9 篇、M2/M3/M4 注记全部正确渲染 |
+| 文档库缓存实测 | FAQ ↔ 01-format 切回复访零新请求；控制台零错误；移动端 Sheet 正常 |
+
+## 3. 怎么回滚
+
+| 想撤掉 | 做法 |
+|---|---|
+| 1（统计推导） | `git checkout 103a171 -- src/lib/axp-server.ts` |
+| 2–3（数据函数化） | `git checkout 103a171 -- src/components/axp/data.ts src/components/axp/sections-host.tsx` |
+| 4（路线图注记） | 同上，data.ts 一并回退 |
+| 5（文档库） | `git checkout 103a171 -- src/components/axp/library-section.tsx` |
+| 6（接线） | `git checkout 103a171 -- src/components/axp/axp-site.tsx` |
+| 7（文档） | 按 diff 回退对应段落 |
+
+---
+
 # v1.0.6 · 依赖与模板清理批次（ROADMAP G05/G06/G08）
 
 > 基线：`Ultra-Guru/axp` @ `1676785`（v1.0.5）

@@ -2,6 +2,7 @@
  * AXP 服务端数据层 —— 从工程根的 axp/ 目录读取真实规范项目内容。
  * 仅在服务端使用（Server Component / API Route）。
  */
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { buildTree } from "@/lib/tree";
@@ -50,17 +51,21 @@ export interface SiteData {
   examples: ExampleData[];
   docs: DocMeta[];
   stats: {
-    specFiles: number;
+    /** 以下为格式自身的规范常量（随 spec 演进手改，非仓库统计） */
     domains: number;
     privilegeLevels: number;
     componentTypes: number;
     implForms: number;
+    /** 以下全部从 axp/ 真实推导（D15：数字变化无需手改） */
+    specFiles: number;
     examples: number;
     validatorTests: number;
     crossCheck: number;
     runtimeAssertions: number;
-    loadingSteps: number;
-    hostLevels: number;
+    docsSpec: number;
+    docsTutorials: number;
+    docsReference: number;
+    docsRoot: number;
   };
 }
 
@@ -197,24 +202,109 @@ function loadDocs(): DocMeta[] {
   }));
 }
 
+/* --------------------------- 仓库统计推导（D15） --------------------------- */
+
+/**
+ * 测试数不手写：构建期（或 dev 首次渲染）真实执行两套零依赖 Node 测试并解析汇总行。
+ * 执行失败即抛错——站点宣称「全绿」，套件挂了站点就不应该构建出来。
+ */
+function runTool(cmd: string, args: string[]): string {
+  return execFileSync(cmd, args, {
+    cwd: AXP_ROOT,
+    timeout: 120_000,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+}
+
+function deriveValidatorTests(): number {
+  const out = runTool(process.execPath, ["validator/test/run-tests.mjs", "--json"]);
+  const total = (JSON.parse(out) as { total?: number }).total;
+  if (typeof total !== "number" || total <= 0) {
+    throw new Error("validator/test/run-tests.mjs --json 未返回有效 total");
+  }
+  return total;
+}
+
+function deriveRuntimeAssertions(): number {
+  const out = runTool(process.execPath, ["runtime/test/smoke.mjs"]);
+  const m = /ALL (\d+) ASSERTIONS PASSED/.exec(out);
+  if (!m) throw new Error("runtime/test/smoke.mjs 未产出汇总行（套件失败？）");
+  return Number(m[1]);
+}
+
+/**
+ * 交叉复核需要 python3 + jsonschema，构建环境不保证具备：
+ * 优先真实执行；不可用时退回结构化推导（计数仍准确，
+ * 「是否真的通过」由 CI axp-selfcheck job 门禁）。
+ * 结构化公式：2（元语法）+ 2×示例数 + cases 用例数 + 2（if/then 边界）+ 2×业务用例数。
+ */
+function deriveCrossCheckStructurally(): number {
+  const src = fs.readFileSync(path.join(AXP_ROOT, "validator/test/schema-crosscheck.py"), "utf8");
+  const blockAfter = (marker: string, close: string) => {
+    const i = src.indexOf(marker);
+    if (i < 0) throw new Error(`schema-crosscheck.py 结构变化：找不到 ${marker}`);
+    return src.slice(i).split(close)[0];
+  };
+  const examples = fs
+    .readdirSync(path.join(AXP_ROOT, "examples"), { withFileTypes: true })
+    .filter((e) => e.isDirectory() && fs.existsSync(path.join(AXP_ROOT, "examples", e.name, "axp.json"))).length;
+  const cases = (blockAfter("cases = {", "\n}\n").match(/^ {4}"[^"]+":/gm) ?? []).length;
+  const business = (blockAfter("business_cases = [", "\n]\n").match(/^ {4}\("/gm) ?? []).length;
+  if (!cases || !business) {
+    throw new Error("schema-crosscheck.py 结构变化：无法推导交叉复核项数（请安装 python3 + jsonschema 后重试）");
+  }
+  return 2 + 2 * examples + cases + 2 + 2 * business;
+}
+
+function deriveCrossCheck(): number {
+  try {
+    const out = runTool("python3", ["validator/test/schema-crosscheck.py"]);
+    const m = /(\d+) passed, 0 failed/.exec(out);
+    if (m) return Number(m[1]);
+  } catch {
+    // 无 python3 / 无 jsonschema / 套件失败：退回结构化推导（见上注释）
+  }
+  return deriveCrossCheckStructurally();
+}
+
+/** 测试数推导结果按进程缓存：套件执行有成本，且数字只在 axp/ 变化时才会变 */
+let testCountsCache: { validatorTests: number; crossCheck: number; runtimeAssertions: number } | null = null;
+
+function deriveTestCounts() {
+  if (!testCountsCache) {
+    testCountsCache = {
+      validatorTests: deriveValidatorTests(),
+      runtimeAssertions: deriveRuntimeAssertions(),
+      crossCheck: deriveCrossCheck(),
+    };
+  }
+  return testCountsCache;
+}
+
 /* ------------------------------ 汇总 ------------------------------ */
 
 export function loadSiteData(): SiteData {
+  const examples = loadExamples();
+  const docs = loadDocs();
+  const countGroup = (g: string) => docs.filter((d) => d.group === g).length;
   return {
-    examples: loadExamples(),
-    docs: loadDocs(),
+    examples,
+    docs,
     stats: {
-      specFiles: 9,
+      // 规范常量（随 spec 演进手改）
       domains: 13,
       privilegeLevels: 6,
       componentTypes: 6,
       implForms: 7,
-      examples: 4,
-      validatorTests: 31,
-      crossCheck: 43,
-      runtimeAssertions: 30,
-      loadingSteps: 9,
-      hostLevels: 4,
+      // 仓库真实推导
+      specFiles: fs.readdirSync(path.join(AXP_ROOT, "spec"), { withFileTypes: true }).filter((e) => e.isFile()).length,
+      examples: examples.length,
+      ...deriveTestCounts(),
+      docsSpec: countGroup("规范正文 spec/"),
+      docsTutorials: countGroup("教程与指南 docs/"),
+      docsReference: countGroup("参考实现"),
+      docsRoot: countGroup("仓库根文件"),
     },
   };
 }

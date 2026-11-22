@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { CodeBlock } from "./code-block";
 import { FieldTable, Pill, Section } from "./section-primitives";
-import { CLI_COMMANDS, HOST_LEVELS, LOADING_STEPS, ROADMAP, SELF_CHECKS, TOOLCHAIN } from "./data";
+import { CLI_COMMANDS, HOST_LEVELS, LOADING_STEPS, ROADMAP, selfChecks, toolchain, type RepoCounts } from "./data";
 
 /* --------------------------- 装载流水线 --------------------------- */
 
@@ -79,7 +79,7 @@ export function RoadmapSection() {
       id="roadmap"
       kicker="spec/01-format.md §12"
       title="路线图 M1–M7"
-      lead="实现进度不影响规范条款本身。截至 v1.0.3：M1、M2（Node 参考运行时）、M2.5、M5 已跑通；M3 规范/示例/教程就位，真机域适配器待补；M4 的 gradient 选择算法已实现、Shizuku 通道待接。"
+      lead="实现进度不影响规范条款本身：M1、M2（Node 参考运行时）、M2.5、M5 已跑通；M3 规范/示例/教程就位，真机域适配器待补；M4 的 gradient 选择算法已实现、Shizuku 通道待接。各里程碑的实现状态注记与 README / spec §12 口径一致。"
     >
       <div className="relative space-y-2.5 before:absolute before:bottom-4 before:left-[15px] before:top-4 before:w-px before:bg-border md:before:left-1/2">
         {ROADMAP.map((m, i) => (
@@ -100,6 +100,12 @@ export function RoadmapSection() {
                   </Pill>
                 </div>
                 <p className="text-[12.5px] leading-relaxed text-muted-foreground">{m.deliver}</p>
+                {m.note && (
+                  <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                    <span className="font-medium">实现状态：</span>
+                    {m.note}
+                  </p>
+                )}
                 <p className="mt-1.5 border-t border-border/60 pt-1.5 text-[11.5px] text-muted-foreground">
                   出口标准：{m.exit}
                 </p>
@@ -126,7 +132,9 @@ export function RoadmapSection() {
 
 /* --------------------------- 工具链与自检 --------------------------- */
 
-export function ToolingSection() {
+export function ToolingSection({ counts }: { counts: RepoCounts }) {
+  const checks = selfChecks(counts);
+  const tools = toolchain(counts);
   return (
     <Section
       id="tooling"
@@ -135,7 +143,7 @@ export function ToolingSection() {
       lead="规范不是纸面文档：validator 零依赖、CLI 五个命令、参考运行时可跑、双引擎交叉复核。以下是本仓库每次提交前 MUST 全绿的自检。"
     >
       <div className="mb-8 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-        {TOOLCHAIN.map((t) => (
+        {tools.map((t) => (
           <div key={t.name} className="rounded-lg border p-4 transition-colors hover:border-emerald-500/40">
             <code className="mb-1.5 block font-mono text-[13px] font-semibold text-emerald-700 dark:text-emerald-400">{t.name}</code>
             <p className="text-[12.5px] leading-relaxed text-muted-foreground">{t.desc}</p>
@@ -161,7 +169,7 @@ export function ToolingSection() {
             四套自检（CI 对每次 PR 执行同一组）
           </h3>
           <div className="space-y-2">
-            {SELF_CHECKS.map((s) => (
+            {checks.map((s) => (
               <div key={s.name} className="flex items-center justify-between gap-3 rounded-lg border px-3.5 py-2.5">
                 <div className="min-w-0">
                   <p className="text-[13px] font-medium">{s.name}</p>
@@ -186,9 +194,9 @@ export function ToolingSection() {
 for d in examples/*/; do node validator/src/validate.mjs "$d"; done
 
 # 行为用例 / 独立引擎交叉复核 / 端到端冒烟
-node validator/test/run-tests.mjs            # 31/31
-python3 validator/test/schema-crosscheck.py  # 43/43（需 pip install jsonschema）
-node runtime/test/smoke.mjs                  # 30/30`}
+node validator/test/run-tests.mjs            # ${counts.validatorTests}/${counts.validatorTests}
+python3 validator/test/schema-crosscheck.py  # ${counts.crossCheck}/${counts.crossCheck}（需 pip install jsonschema）
+node runtime/test/smoke.mjs                  # ${counts.runtimeAssertions}/${counts.runtimeAssertions}`}
         />
       </div>
     </Section>

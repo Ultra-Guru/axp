@@ -132,7 +132,7 @@ node ../scripts/site-check.mjs --prebuild
 ├── public/
 └── axp/                       ← ★ AXP 规范项目（可独立使用，见 axp/README.md）
     ├── README.md              ← 规范项目总览（含文档索引与自检）
-    ├── CHANGELOG.md           ← v1.0.0 → v1.0.6 变更记录
+    ├── CHANGELOG.md           ← v1.0.0 → v1.0.7 变更记录
     ├── CONTRIBUTING.md / LICENSE
     ├── spec/                  ← 规范正文（01 主规范 + 02 schema + 03–09 专章）
     ├── docs/                  ← 11 篇教程与指南（集成 / 插件 / UI / 热加载 / 域 / CLI / FAQ…）
@@ -218,7 +218,8 @@ AXP-0（装载 + tools）→ AXP-1（+ surfaces / knowledge）→ AXP-2（+ agen
 
 ## 变更记录（摘要）
 
-- **v1.0.6**（本轮）：依赖与模板清理批次——删除 36 个不可达 shadcn/ui 组件（保留 12 个）与 47 个未使用依赖（`dependencies` 66 → 19，含组件删除后的级联孤儿），重生成 `bun.lock` 并复跑 frozen 校验。**规范语义不变**。
+- **v1.0.7**（本轮）：站点数据自推导批次——测试数改为构建期真实执行两套零依赖 Node 套件解析汇总行（套件挂了站点构建即失败；交叉复核无 python 环境时结构化回退，与真实执行核对一致）；文档 / 示例 / 规范文件数全部 fs 推导；路线图 M2/M3/M4 新增实现状态注记与 README / spec §12 口径统一（D14）；文档库 `fetchDoc` 消除无效重建（D16）。**规范语义不变**。
+- **v1.0.6**：依赖与模板清理批次——删除 36 个不可达 shadcn/ui 组件（保留 12 个）与 47 个未使用依赖（`dependencies` 66 → 19，含组件删除后的级联孤儿），重生成 `bun.lock` 并复跑 frozen 校验；随批删除 Tailwind v3 死配置 `tailwind.config.ts`（CI 首推即捕获其引用已删依赖）。**规范语义不变**。
 - **v1.0.5**：质量门禁批次——`ignoreBuildErrors` 置 `false`（构建期真实类型检查）、`reactStrictMode` 开启、ESLint 恢复 unused-vars / no-undef / exhaustive-deps 三类规则、CI 链接检查扩展到全仓；修复演练场预设的 `ocr` 空值缺陷与若干未使用导入；整删 Prisma 模板。**规范语义不变**。
 - **v1.0.4**：完成度审计；修复 standalone 产物不含 `axp/` 数据的部署缺陷（`outputFileTracingIncludes` + `build` 脚本复制）；CI 新增 `web-build` job；新增顶层 `LICENSE`、产物自检脚本、审计报告与任务总账。**规范语义不变**。详见 [`PATCHES.md`](PATCHES.md) 与 [`AUDIT.md`](AUDIT.md)。
 - **v1.0.3**（本仓库基线）：修复参考运行时 Surface 背压时序缺陷——`prime()` 的初始 `full` 快照不再占用推送窗口，装载后首个真实 `delta` 不再被误吞；`smoke.mjs` 30/30 稳定全绿。**规范语义不变**。
